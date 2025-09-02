@@ -17,20 +17,18 @@ import joblib
 from sklearn.exceptions import NotFittedError
 
 # Load data first
-df_medicine = pd.read_csv(
-    r"C:\Users\MehakAnand\OneDrive\Pictures\projects\Medicine_Details.csv")
-df_details = pd.read_csv(
-    r"C:\Users\MehakAnand\OneDrive\Pictures\projects\Disease_Description.csv")
+df_medicine = pd.read_csv("enter you path of dataset")
+df_details = pd.read_csv("enter the dataset path")
 
 # Load models and encoders
-with open(r"C:\Users\MehakAnand\OneDrive\Pictures\projects\voting_classifier (2).pkl", "rb") as f:
+with open(r"enter the path of pickel file", "rb") as f:
     voting_classifier = pickle.load(f)
 
-with open(r"C:\Users\MehakAnand\OneDrive\Pictures\projects\label_encoder.pkl", "rb") as f:
+with open(r"enter the path of pickel file", "rb") as f:
     label_encoder = pickle.load(f)
 
 # ✅ FIX HERE: load TF-IDF and ensure it's fitted
-with open(r"C:\Users\MehakAnand\OneDrive\Pictures\projects\tfidf_vectorizer (1).pkl", "rb") as f:
+with open(r"eneter the path of pickel file", "rb") as f:
     tfidf_vectorizer = pickle.load(f)
 
 try:
@@ -41,7 +39,7 @@ except NotFittedError:
     corpus = df_details["Symptoms"].astype(str).tolist() + df_details["Description"].astype(str).tolist()
     tfidf_vectorizer.fit(corpus)
     # save back the fitted vectorizer
-    with open(r"C:\Users\MehakAnand\OneDrive\Pictures\projects\tfidf_vectorizer (1).pkl", "wb") as f2:
+    with open(r"enter path of pickel file", "wb") as f2:
         pickle.dump(tfidf_vectorizer, f2)
 
 
@@ -226,3 +224,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -94,6 +94,8 @@ It’s a starting point for building **more advanced healthcare chatbots** with 
 
 ---
 The screenshots attached below demonstrate the working of the chatbot
+<img width="1904" height="1035" alt="Screenshot 2025-09-02 204646" src="https://github.com/user-attachments/assets/229b7cd8-165c-4467-a7fb-6aacc963d1ec" />
 <img width="1902" height="1030" alt="Screenshot 2025-09-02 204908" src="https://github.com/user-attachments/assets/8bdb76f0-710c-46a9-81b6-f507272ab6a7" />
+<img width="913" height="530" alt="Screenshot 2025-09-02 205241" src="https://github.com/user-attachments/assets/b84dd1b2-db02-483d-b63e-9ac0f7d938fe" />
 
 

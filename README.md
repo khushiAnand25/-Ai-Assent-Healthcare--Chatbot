@@ -97,5 +97,11 @@ The screenshots attached below demonstrate the working of the chatbot
 <img width="1904" height="1035" alt="Screenshot 2025-09-02 204646" src="https://github.com/user-attachments/assets/229b7cd8-165c-4467-a7fb-6aacc963d1ec" />
 <img width="1902" height="1030" alt="Screenshot 2025-09-02 204908" src="https://github.com/user-attachments/assets/8bdb76f0-710c-46a9-81b6-f507272ab6a7" />
 <img width="913" height="530" alt="Screenshot 2025-09-02 205241" src="https://github.com/user-attachments/assets/b84dd1b2-db02-483d-b63e-9ac0f7d938fe" />
+<img width="971" height="521" alt="Screenshot 2025-09-02 205249" src="https://github.com/user-attachments/assets/26b6f518-c54f-4781-b4b9-6d4ad13a36c9" />
+<img width="965" height="553" alt="Screenshot 2025-09-02 205629" src="https://github.com/user-attachments/assets/c3a10e57-c851-4821-9198-345796d5ec12" />
+<img width="943" height="576" alt="Screenshot 2025-09-02 205637" src="https://github.com/user-attachments/assets/1649b49d-d54f-4a87-9818-ce1b658e54d6" />
+
+
+
 
 

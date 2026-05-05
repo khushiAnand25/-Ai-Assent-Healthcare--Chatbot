@@ -10,40 +10,47 @@ import spacy
 from nltk.corpus import stopwords
 import pickle
 from nltk.stem import WordNetLemmatizer
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 import wikipedia
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 import joblib
-from sklearn.exceptions import NotFittedError
+import os
 
-# Load data first
-df_medicine = pd.read_csv("enter you path of dataset")
-df_details = pd.read_csv("enter the dataset path")
 
-# Load models and encoders
-with open(r"enter the path of pickel file", "rb") as f:
+
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+# Get base directory (where app runs)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+PICKLE_DIR = os.path.join(os.path.dirname(BASE_DIR), "Pickle Files")
+DATASET_DIR = os.path.join(os.path.dirname(BASE_DIR), "Datasets")
+
+
+# Load the voting classifier
+with open(os.path.join(PICKLE_DIR, "voting_classifier.pkl"), "rb") as f:
     voting_classifier = pickle.load(f)
 
-with open(r"enter the path of pickel file", "rb") as f:
+# Load the label encoder
+with open(os.path.join(PICKLE_DIR, "label_encoder.pkl"), "rb") as f:
     label_encoder = pickle.load(f)
 
-# ✅ FIX HERE: load TF-IDF and ensure it's fitted
-with open(r"eneter the path of pickel file", "rb") as f:
+# Load the TF-IDF vectorizer
+with open(os.path.join(PICKLE_DIR, "tfidf_vectorizer.pkl"), "rb") as f:
     tfidf_vectorizer = pickle.load(f)
 
-try:
-    # test if fitted
-    _ = tfidf_vectorizer.transform(["test"])
-except NotFittedError:
-    st.warning("⚠️ TF-IDF vectorizer not fitted. Fitting it now...")
-    corpus = df_details["Symptoms"].astype(str).tolist() + df_details["Description"].astype(str).tolist()
-    tfidf_vectorizer.fit(corpus)
-    # save back the fitted vectorizer
-    with open(r"enter path of pickel file", "wb") as f2:
-        pickle.dump(tfidf_vectorizer, f2)
+# Load datasets
+df_medicine = pd.read_csv(os.path.join(DATASET_DIR, "Medicine_Details.csv"))
+df_details = pd.read_csv(os.path.join(DATASET_DIR, "Disease_Description.csv"))
 
+print("Vectorizer features:", len(tfidf_vectorizer.get_feature_names_out()))
+print("Model expected features:", voting_classifier.estimators_[0].n_features_in_)
 
-# ---------------- Preprocessing ----------------
 def preprocess_text(text):
     text = text.lower()
     exclude = set(string.punctuation)
@@ -66,7 +73,6 @@ def preprocess_text(text):
     }
 
     auxiliary_verbs = {"would", "have", "should"}
-
     for contraction, expansion in contractions.items():
         text = text.replace(contraction, expansion)
     for verb in auxiliary_verbs:
@@ -78,36 +84,30 @@ def preprocess_text(text):
 
     lemma = WordNetLemmatizer()
     tokens = [lemma.lemmatize(token) for token in tokens]
-
     text = ' '.join(tokens)
     text = re.sub(' +', ' ', text)
     return text
 
-# ---------------- Chat Helpers ----------------
-
+# Chat helpers
 def append_user(prompt):
     with st.chat_message("User"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "User", "content": prompt})
-
 
 def append_assistant(prompt):
     with st.chat_message("Assistant"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "Assistant", "content": prompt})
 
-
 def bot_response(response):
     for word in response.split():
         yield word + " "
         time.sleep(0.07)
 
-
 def append_bot(response):
     with st.chat_message("Assistant"):
         st.write_stream(bot_response(response))
-    st.session_state.messages.append({"role": "Assistant", "content": response})
-
+        st.session_state.messages.append({"role": "Assistant", "content": response})
 
 def append_med_bot(response_df):
     response_str = response_df.to_markdown()
@@ -115,8 +115,6 @@ def append_med_bot(response_df):
         st.markdown(response_str)
         time.sleep(0.07)
     st.session_state.messages.append({"role": "Assistant", "content": response_str})
-
-# ---------------- Disease Prediction ----------------
 
 def predict_disease(text):
     text_processed = preprocess_text(text)
@@ -133,28 +131,42 @@ def predict_disease(text):
         append_bot("**Symptoms:**  \n" + symp)
         append_bot("**Treatment:**  \n" + treatment)
 
-# ---------------- Wiki Search ----------------
-
 def get_wikipedia_page_url(topic):
     try:
+        if not topic.strip():
+            return "Please enter a valid disease name."
+
         search_results = wikipedia.search(topic)
-        append_bot("Please help me choose which of the following suits your query:")
-        selected_result = st.selectbox("Choose a search result:", search_results[:5], index=0)
+
+        if not search_results:
+            return "No results found on Wikipedia."
+
+        append_bot("Please choose the most relevant result:")
+
+        selected_result = st.selectbox(
+            "Choose a search result:",
+            search_results[:5],
+            index=0
+        )
+
         append_user(selected_result)
-        page = wikipedia.page(selected_result)
+
+        page = wikipedia.page(selected_result, auto_suggest=False)
         return page.url
+
     except wikipedia.exceptions.DisambiguationError as e:
-        return f"Ambiguous search term. Did you mean: {', '.join(e.options)}?"
+        return f"Too many results. Try something specific.\nOptions: {', '.join(e.options[:5])}"
+
     except wikipedia.exceptions.PageError:
         return "Page not found on Wikipedia."
 
-# ---------------- Medicine Recommendation ----------------
+    except Exception as e:
+        return "⚠️ Unable to fetch data. Check internet connection or try again."
 
 def load_models(vectorizer_path, model_path):
-    tfidf_vectorizer = joblib.load(vectorizer_path)
-    nn_model = joblib.load(model_path)
+    tfidf_vectorizer = joblib.load(os.path.join(PICKLE_DIR, vectorizer_path))
+    nn_model = joblib.load(os.path.join(PICKLE_DIR, model_path))
     return tfidf_vectorizer, nn_model
-
 
 def recommend_medicines_by_text(input_text, tfidf_vectorizer, nn_model, df_medicine):
     input_vector = tfidf_vectorizer.transform([input_text])
@@ -163,10 +175,8 @@ def recommend_medicines_by_text(input_text, tfidf_vectorizer, nn_model, df_medic
         'Medicine Name', 'Composition', 'Uses', 'Side_effects']]
     return recommended_medicines_df
 
-# ---------------- Main App ----------------
-
 def main():
-    st.title(" Healthcare Chatbot 🤖💊🏥")
+    st.title("Pluto: Healthcare Chatbot 🤖💊🏥")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -196,7 +206,7 @@ def main():
         append_user(action)
         with st.form(key='disease_info_form'):
             topic = st.text_input("Enter the disease you want to find information about:")
-            if len(topic) != 0:
+            if (len(topic) != 0):
                 append_user(topic)
             if st.form_submit_button("Search"):
                 result = get_wikipedia_page_url(topic)
@@ -216,12 +226,12 @@ def main():
             recommended_medicines_df = recommend_medicines_by_text(
                 symptoms, loaded_tfidf_vectorizer, loaded_nn_model, df_medicine)
             append_med_bot(recommended_medicines_df)
-            append_assistant(
-                "Please note the medicines might differ in composition, you are requested to consult a physician before using any of the above suggested medicines")
+            append_assistant("⚠️ Please consult a physician before using any suggested medicines")
         else:
             st.write("Assistant: Please provide your symptoms")
 
-
 if __name__ == "__main__":
     main()
+
+
 

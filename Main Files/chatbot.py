@@ -176,7 +176,7 @@ def recommend_medicines_by_text(input_text, tfidf_vectorizer, nn_model, df_medic
     return recommended_medicines_df
 
 def main():
-    st.title("Pluto: Healthcare Chatbot 🤖💊🏥")
+    st.title("HEALTHCARE CHATBOT")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
